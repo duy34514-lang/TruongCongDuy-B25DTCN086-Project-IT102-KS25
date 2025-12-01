@@ -37,10 +37,6 @@ void setCurrentTime(char *out, size_t size) ;
 void getDateInt(int *day, int *month ) ;
 int check( char *str , int *ptr ) ;
 void checkString(char *string, int maxLen) ;
-void check15(char *string) ;
-void check20(char *string) ;
-void check50(char *string) ;
-void check100(char *string) ;
 void output(Trip *CreateNT, int size) ;
 void createNewTrip(Trip *CreateNT, int *count) ;
 void update(Trip *CreateNT, int size) ;
@@ -49,16 +45,15 @@ void CheckTicketStatus(Ticket *ticket, int countTk, Trip *CreateNT, int countTri
 void listTrips ( Trip *CreateNT , int size ) ;
 void updateTicket ( Ticket *ticket , int size ) ;
 void lockTk(Ticket *ticket, int ticketCount, Trip *CreateNT, int tripCount , int *count ) ;
-int revenue ( Ticket *ticket , int size ) ;
 int sumPaymen ( Ticket *ticket , int size ) ;
 void functionOut2 ( Ticket *ticket , int countTk , int totalCancel ) ;
 void functionTime(Ticket *ticket, int countTk) ;
-void doanhthuvathongke(Ticket *ticket, int countTk, int totalCancel) ;
+void reportRevenue(Ticket *ticket, int countTk, int totalCancel) ;
 
 // ================= MAIN ===================
 int main() {
     Trip CreateNT[100];
-    Ticket ticket[100] ;
+    Ticket ticket[10000] ;
     int count = 0, choice ;
     int flag = 0;
     int countTk = 0 ;
@@ -140,7 +135,7 @@ int main() {
 					printf ("chua co thong tin chuyen xe \n") ;
 					break ;
 				}
-				doanhthuvathongke( ticket, countTk, totalCancel ) ;
+				reportRevenue( ticket, countTk, totalCancel ) ;
 				break ;
             default:
                 printf("Lua chon khong hop le.\n") ;
@@ -164,76 +159,64 @@ void getDateInt(int *day, int *month ) {
     time_t now = time(NULL);
     struct tm *tm_info = localtime(&now);
 
-    *day   = tm_info->tm_mday;        // Ngày (1–31)
-    *month = tm_info->tm_mon + 1;     // Tháng (0–11) + +1
+    *day   = tm_info->tm_mday;        // NgÃ y (1â€“31)
+    *month = tm_info->tm_mon + 1;     // ThÃ¡ng (0â€“11) + +1
 }
 
-int check( char *str , int *ptr ) {
-    if (fgets(str, 15, stdin) == NULL) {
-        return 0; 
-    }
-    str[strcspn(str, "\n")] = '\0';
-    if (strlen(str) == 14 && str[13] != '\0') {
-        clearBuffer();
-    }
-    if (sscanf(str, "%d", ptr) == 1) {
-        return 1;
-    } else {
+int check(char *str, int *ptr) {
+    if (fgets(str, 50, stdin) == NULL) {
         return 0;
     }
+
+    int len = strlen(str);
+    if (len > 0 && str[len - 1] != '\n') {
+        clearBuffer();
+        return 0;
+    } else {
+        str[len - 1] = '\0'; 
+    }
+    return (sscanf(str, "%d", ptr) == 1);
 }
 
 void checkString(char *string, int maxLen) {
     while (1) {
         if (fgets(string, maxLen, stdin) == NULL) {
-            printf("Nhap khong hop le, nhap lai: ");
+            printf("Nhap khong hop le, nhap lai:\n");
+            clearBuffer();
+            continue;
+        }
+        if (strchr(string, '\n') == NULL) {
+            clearBuffer();
+            printf("Nhap qua gioi han %d ky tu, nhap lai:\n", maxLen - 1);
             continue;
         }
         string[strcspn(string, "\n")] = '\0';
-        int len = strlen(string);
-        
-        if (len == maxLen - 1 && string[len-1] != '\0' && getchar() != '\n') {
-             printf("Nhap qua gioi han %d ky tu, nhap lai: ", maxLen - 1);
-             clearBuffer();
-             continue;
-        }
-        
+        size_t len = strlen(string);
         if (len == 0) {
-            printf("Khong duoc rong, nhap lai: ");
+            printf("Khong duoc rong, nhap lai:\n");
             continue;
-		}
+        }
+
         if (string[0] == ' ') {
-            printf("Khong duoc bat dau bang khoang trang, nhap lai: ");
+            printf("Khong duoc bat dau bang khoang trang, nhap lai:\n");
             continue;
         }
-        
-        if ( string[len - 1] == ' ' ) {
-        	printf ("khong duoc khoang trang o cuoi, nhap lai") ;
-        	continue ;
+
+        if (string[len - 1] == ' ') {
+            printf("Khong duoc ket thuc bang khoang trang, nhap lai:\n");
+            continue;
         }
-        break; 
+
+        break;
     }
 }
-
-void check15(char *string) { 
-    checkString(string, 15); 
-	}
-void check20(char *string) { 
-    checkString(string, 20); 
-	}
-void check50(char *string) {
-    checkString(string, 50); 
-	}
-void check100(char *string) { 
-    checkString(string, 100); 
-	}
 
 void output(Trip *CreateNT, int size) {
     int i;
     printf("****************************************************************\n");
     for (i = 0; i < size; i++) {
         printf("*___________________XE %s__________________________\n", CreateNT[i].tripid);
-        printf("*|Ten diem di       : %s\n", CreateNT[i].departure.name);
+        printf("*|Ten diem di        : %s\n", CreateNT[i].departure.name);
         printf("*|Dia chi diem di    : %s\n", CreateNT[i].departure.address);
         printf("*|Ten diem den       : %s\n", CreateNT[i].destination.name);
         printf("*|Dia chi diem den   : %s\n", CreateNT[i].destination.address);
@@ -266,43 +249,39 @@ void createNewTrip(Trip *CreateNT, int *count) {
 
     for (i = start; i < *count; i++) {
         printf("Nhap ID xe %d (toi da 19 ky tu): ", i + 1);
-        check20(CreateNT[i].tripid);
+        checkString(CreateNT[i].tripid , sizeof(CreateNT[i].tripid));
 
         for (j = 0; j < i; j++) {
             if (strcmp(CreateNT[i].tripid, CreateNT[j].tripid) == 0) {
                 printf("Ma chuyen xe bi trung. Nhap lai ma xe %d: ", i + 1);
-                check20(CreateNT[i].tripid);
+                checkString(CreateNT[i].tripid , sizeof(CreateNT[i].tripid));
                 j = -1;
             }
         }
 
         printf("Nhap ten diem di: ");
-        check50(CreateNT[i].departure.name);
+        checkString(CreateNT[i].departure.name , sizeof(CreateNT[i].departure.name));
 
         printf("Nhap dia chi diem di: ");
-        check100(CreateNT[i].departure.address);
+        checkString(CreateNT[i].departure.address , sizeof(CreateNT[i].departure.address));
 
         printf("Nhap ten diem den: ");
-        check50(CreateNT[i].destination.name);
+        checkString(CreateNT[i].destination.name , sizeof(CreateNT[i].destination.name));
 
         printf("Nhap dia chi diem den: ");
-        check100(CreateNT[i].destination.address);
+        checkString(CreateNT[i].destination.address , sizeof(CreateNT[i].destination.address));
 
         printf("Thoi gian chay: ");
-        check20(CreateNT[i].date);
-        
-        int totalSeats_input;
+        checkString(CreateNT[i].date , sizeof(CreateNT[i].date));
         
         do {
             printf("Nhap tong so ghe: ");
-            if (check( str , &totalSeats_input) == 0) {
-                 printf("Vui long nhap so nguyen hop le.\n");
-                 totalSeats_input = 0; 
+            if (check( str , &CreateNT[i].totalSeats) == 0) {
+                printf("Vui long nhap so nguyen hop le.\n");
+                CreateNT[i].totalSeats = 0 ;
                  continue;
             }
-            CreateNT[i].totalSeats = totalSeats_input;
-            if (CreateNT[i].totalSeats <= 0)
-                printf("So ghe phai > 0\n");
+            if (CreateNT[i].totalSeats <= 0) printf("So ghe phai > 0\n");
         } while (CreateNT[i].totalSeats <= 0);
 
         CreateNT[i].bookedSeats = 0;
@@ -316,10 +295,9 @@ void update(Trip *CreateNT, int size) {
     int i, k, flag = 0;
     char updateID[20];
     char str[10] ; 
-    int totalSeats_input;
 
     printf("Nhap ID xe can cap nhat: ");
-    check20(updateID);
+    checkString(updateID , sizeof(updateID));
 
     for (i = 0; i < size; i++) {
         if (strcmp(updateID, CreateNT[i].tripid) == 0) {
@@ -328,11 +306,11 @@ void update(Trip *CreateNT, int size) {
             do {
                 printf("_______________ Cap nhat xe %s ________________\n", CreateNT[i].tripid);
                 printf("1. Ten diem di        : %s\n", CreateNT[i].departure.name);
-                printf("2. Dia chi diem di     : %s\n", CreateNT[i].departure.address);
-                printf("3. Ten diem den        : %s\n", CreateNT[i].destination.name);
-                printf("4. Dia chi diem den     : %s\n", CreateNT[i].destination.address);
-                printf("5. Ngay thang nam      : %s\n", CreateNT[i].date);
-                printf("6. Tong so ghe         : %d\n", CreateNT[i].totalSeats);
+                printf("2. Dia chi diem di    : %s\n", CreateNT[i].departure.address);
+                printf("3. Ten diem den       : %s\n", CreateNT[i].destination.name);
+                printf("4. Dia chi diem den   : %s\n", CreateNT[i].destination.address);
+                printf("5. Ngay thang nam     : %s\n", CreateNT[i].date);
+                printf("6. Tong so ghe        : %d\n", CreateNT[i].totalSeats);
                 printf("7. Thoat cap nhat\n");
                 printf("Ban muon cap nhat muc nao? ");
 
@@ -348,38 +326,37 @@ void update(Trip *CreateNT, int size) {
                 switch (k) {
                     case 1:
                         printf("Nhap ten moi: ");
-                        check50(CreateNT[i].departure.name);
+                        checkString(CreateNT[i].departure.name , sizeof(CreateNT[i].departure.name));
                         break;
 
                     case 2:
                         printf("Nhap dia chi moi: ");
-                        check100(CreateNT[i].departure.address);
+                        checkString(CreateNT[i].departure.address , sizeof(CreateNT[i].departure.address));
                         break;
 
                     case 3:
                         printf("Nhap ten diem den moi: ");
-                        check50(CreateNT[i].destination.name);
+                        checkString(CreateNT[i].destination.name , sizeof(CreateNT[i].destination.name)) ;
                         break;
 
                     case 4:
                         printf("Nhap dia chi diem den moi: ");
-                        check100(CreateNT[i].destination.address);
+                        checkString(CreateNT[i].destination.address , sizeof(CreateNT[i].destination.address));
                         break;
 
                     case 5:
                         printf("Nhap ngay/thang/nam moi: ");
-                        check20(CreateNT[i].date);
+                        checkString(CreateNT[i].date , sizeof(CreateNT[i].date));
                         break;
 
                     case 6:
                         do {
                             printf("Nhap so ghe moi: ");
-                            if (check( str , &totalSeats_input) == 0) {
+                            if (check( str , &CreateNT[i].totalSeats) == 0) {
                                  printf("Vui long nhap so nguyen hop le.\n");
-                                 totalSeats_input = 0;
+                                 CreateNT[i].totalSeats = 0;
                                  continue;
                             }
-                            CreateNT[i].totalSeats = totalSeats_input;
                             if (CreateNT[i].totalSeats <= 0)
                                 printf("So ghe phai > 0\n");
                         } while (CreateNT[i].totalSeats <= 0);
@@ -392,20 +369,23 @@ void update(Trip *CreateNT, int size) {
         }
     }
 
-    if (flag) printf("Cap nhat thanh cong!\n");
+    if ( flag == 1 ) printf("Cap nhat thanh cong!\n");
     else printf("Khong tim thay ID xe.\n");
 }
 
 void bookTicket(Trip *CreateNT, Ticket *ticket, int size, int *countTk) {
     char search[20];
     int i, flag = 0, j = *countTk;
-    char str[10] ; 
-    int seat_input, price_input;
+    char str[50] ; 
     int k  ;
 
-    do {
+    if ( j > 10000 ) {
+    	printf ("da het cho dat ve !!!! \n") ;
+    	return ;
+	}
+	do {
         printf("Nhap ma chuyen xe: ");
-        check20(search); 
+        checkString(search , sizeof(search)); 
         
         break;
     } while (1);
@@ -422,12 +402,12 @@ void bookTicket(Trip *CreateNT, Ticket *ticket, int size, int *countTk) {
             strcpy(ticket[j].tripIdTk, CreateNT[i].tripid);
             do {
                 printf("Nhap ten khach hang: ");
-                check50(ticket[j].person.name); 
+                checkString(ticket[j].person.name , sizeof(ticket[j].person.name)); 
                 break;
             } while (1);
             do {
                 printf("Nhap so dien thoai khach hang: ");
-                check15(ticket[j].person.phone); 
+                checkString(ticket[j].person.phone , sizeof(ticket[j].person.phone)); 
                 
                 int len = strlen(ticket[j].person.phone);
                 int onlyDigits = 1;
@@ -444,26 +424,19 @@ void bookTicket(Trip *CreateNT, Ticket *ticket, int size, int *countTk) {
                 break;
             } while (1);
             do {
-            	if ( CreateNT[i].totalSeats == 0 ) {
-            		printf ("da het ghe : ") ;
-            		break ;
-				}
                 printf("Xe %s con %d ghe.\n", CreateNT[i].tripid, CreateNT[i].totalSeats - CreateNT[i].bookedSeats);
                 printf("Ban muon dat bao nhieu ghe: ");
                 
-                if (check( str , &seat_input) == 0) {
+                if (check( str , &ticket[j].seatNumber) == 0) {
                     printf("Vui long nhap so nguyen hop le.\n");
-                    seat_input = 0; 
                     continue;
                 }
                 
-                if (seat_input <= 0 || seat_input > (CreateNT[i].totalSeats - CreateNT[i].bookedSeats)) {
+                if (ticket[j].seatNumber  <= 0 || ticket[j].seatNumber  > (CreateNT[i].totalSeats - CreateNT[i].bookedSeats)) {
                     printf("Lua chon khong hop le, nhap lai.\n");
                     continue;
                 }
-
-                ticket[j].seatNumber = seat_input;
-                CreateNT[i].bookedSeats += seat_input; 
+                CreateNT[i].bookedSeats += ticket[j].seatNumber ; 
                 break;
             } while (1);
 
@@ -471,13 +444,12 @@ void bookTicket(Trip *CreateNT, Ticket *ticket, int size, int *countTk) {
             setCurrentTime(ticket[j].date, sizeof(ticket[j].date));
         	getDateInt( &ticket[j].day , &ticket[j].month ) ;
             do {
-                printf("Moi ban nhap gia ve: ");
-                 if (check( str , &price_input) == 0) {
+                printf("Moi ban nhap gia ve (VND): ");
+                 if (check( str , &ticket[j].price) == 0) {
                     printf("Vui long nhap so nguyen hop le.\n");
-                    price_input = -1; 
+                    ticket[j].price = -1; 
                     continue;
                 }
-                ticket[j].price = price_input;
                 if (ticket[j].price < 0) printf("Gia ve khong hop le, nhap lai.\n");
             } while (ticket[j].price < 0);
 
@@ -487,12 +459,12 @@ void bookTicket(Trip *CreateNT, Ticket *ticket, int size, int *countTk) {
             printf("SDT            : %s\n", ticket[j].person.phone);
             printf("So ghe da dat  : %d\n", ticket[j].seatNumber);
             printf("Ngay tao ve    : %s\n", ticket[j].date);
-            printf("Gia ve         : %d\n", ticket[j].price);
+            printf("Gia ve         : %d VND\n", ticket[j].price);
             printf("Trang thai     : %s\n", ticket[j].paymentStatus == 0 ? "Chua thanh toan" : "Da thanh toan");
             printf("======================================================\n");
 
             (*countTk)++;
-            ticket[i].lock = 0 ;
+            ticket[j].lock = 0 ;
             break;
         }
     }
@@ -509,7 +481,7 @@ void CheckTicketStatus(Ticket *ticket, int countTk, Trip *CreateNT, int countTri
         return;
     }
     int searchTk;
-    char str[10] ; 
+    char str[50] ; 
     do {
         printf("Nhap so ve ban muon tim: ");
         if (check( str , &searchTk) == 0) {
@@ -520,10 +492,10 @@ void CheckTicketStatus(Ticket *ticket, int countTk, Trip *CreateNT, int countTri
         break;
     } while (1);
 
-    int found = 0;
+    int flag = 0;
     for ( i = 0; i < countTk; i++) {
         if (ticket[i].ticketId == searchTk) {
-            found = 1;
+            flag = 1;
             
             printf("\n=============================================================\n") ;
             printf("_____________________ Thong tin ve ____________________________\n");
@@ -555,13 +527,13 @@ void CheckTicketStatus(Ticket *ticket, int countTk, Trip *CreateNT, int countTri
         }
     }
 
-    if (!found) {
+    if ( flag == 0 ) {
         printf("Khong tim thay ve co so %d.\n", searchTk);
     }
 }
 
 void listTrips ( Trip *CreateNT , int size ) {
-	int pageNumber ;
+	int pageNumber = 1 ;
 	int pageSize ;
 	int i ;
 	char str[50] ;
@@ -571,6 +543,10 @@ void listTrips ( Trip *CreateNT , int size ) {
 	do {
 		if ( check ( str , &pageSize ) == 0 ) {
 			printf ("vui long nhap dung : ") ;
+			continue ;
+		}
+		if ( pageSize == 0 ) {
+			printf ("so trang khong duoc bang 0, vui long nha lai : ") ;
 			continue ;
 		}
 		break ;
@@ -681,7 +657,7 @@ void updateTicket ( Ticket *ticket , int size ) {
 void lockTk(Ticket *ticket, int ticketCount, Trip *CreateNT, int tripCount , int *count ) {
     int search, choice;
     char str[20];
-    int found = 0;
+    int flag = 0;
     int i , t;
 
     if (ticketCount == 0) {
@@ -696,7 +672,7 @@ void lockTk(Ticket *ticket, int ticketCount, Trip *CreateNT, int tripCount , int
 
     for ( i = 0; i < ticketCount; i++) {
         if (ticket[i].ticketId == search) {
-            found = 1;
+            flag = 1;
 
             printf("___________________________Ma Ve %d___________________________\n" , ticket[i].ticketId );
             printf("| Ma chuyen xe   : %s\n", ticket[i].tripIdTk);
@@ -739,7 +715,7 @@ void lockTk(Ticket *ticket, int ticketCount, Trip *CreateNT, int tripCount , int
 
                     ticket[i].lock = 1; 
                     printf("==> Huy ve thanh cong!\n");
-                    *count++ ;
+                    (*count)++ ;
                     return;
                 }
 
@@ -749,20 +725,9 @@ void lockTk(Ticket *ticket, int ticketCount, Trip *CreateNT, int tripCount , int
         }
     }
 
-    if (!found) {
+    if ( flag == 0) {
         printf("Khong tim thay ve!\n");
     }
-}
-
-int revenue ( Ticket *ticket , int size ) {
-	int totalRevenue = 0 ;
-	int i ;
-	for ( i=0 ; i<size ; i++ ) {
-		if ( ticket[i].paymentStatus == 1 ) {
-			totalRevenue += ticket[i].price ;
-		}
-	}
-	return totalRevenue ;
 }
 
 int sumPaymen ( Ticket *ticket , int size ) {
@@ -839,7 +804,7 @@ void functionTime(Ticket *ticket, int countTk) {
             valid = 1;
         }
 
-        if ( valid ) {
+        if ( valid == 1) {
             count++;
         }
     }
@@ -847,7 +812,7 @@ void functionTime(Ticket *ticket, int countTk) {
     printf("\nSo ve da dat trong khoang thoi gian %d/%d den %d/%d la: %d\n", dayStart, monthStart, dayEnd, monthEnd, count);
 }
 
-void doanhthuvathongke(Ticket *ticket, int countTk, int totalCancel) {
+void reportRevenue(Ticket *ticket, int countTk, int totalCancel) {
     int choice;
     char str[50];
 
@@ -884,4 +849,3 @@ void doanhthuvathongke(Ticket *ticket, int countTk, int totalCancel) {
         break;
     }
 }
-
