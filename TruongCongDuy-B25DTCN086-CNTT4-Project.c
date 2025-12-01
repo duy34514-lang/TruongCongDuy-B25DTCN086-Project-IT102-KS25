@@ -163,6 +163,7 @@ void getDateInt(int *day, int *month ) {
     *month = tm_info->tm_mon + 1;     // Tháng (0–11) + +1
 }
 
+// kiem tra tu ky tu sang so ( thay cho scanf )
 int check(char *str, int *ptr) {
     if (fgets(str, 50, stdin) == NULL) {
         return 0;
@@ -177,7 +178,7 @@ int check(char *str, int *ptr) {
     }
     return (sscanf(str, "%d", ptr) == 1);
 }
-
+// kiem tra chuoi va gán chuoi
 void checkString(char *string, int maxLen) {
     while (1) {
         if (fgets(string, maxLen, stdin) == NULL) {
@@ -226,7 +227,7 @@ void output(Trip *CreateNT, int size) {
     }
     printf("****************************************************************\n");
 }
-
+// tao chuyen xe
 void createNewTrip(Trip *CreateNT, int *count) {
     int start, i, j;
     int size ;
@@ -290,7 +291,7 @@ void createNewTrip(Trip *CreateNT, int *count) {
 
     printf("==> Them %d tuyen thanh cong!\n", size);
 }
-
+// cap nhat chuyen xe
 void update(Trip *CreateNT, int size) {
     int i, k, flag = 0;
     char updateID[20];
@@ -372,7 +373,7 @@ void update(Trip *CreateNT, int size) {
     if ( flag == 1 ) printf("Cap nhat thanh cong!\n");
     else printf("Khong tim thay ID xe.\n");
 }
-
+// dat ve
 void bookTicket(Trip *CreateNT, Ticket *ticket, int size, int *countTk) {
     char search[20];
     int i, flag = 0, j = *countTk;
@@ -473,7 +474,7 @@ void bookTicket(Trip *CreateNT, Ticket *ticket, int size, int *countTk) {
         printf("Khong co chuyen xe ban tim, vui long chon lai.\n");
     }
 }
-
+// hien thi thong tin ve 
 void CheckTicketStatus(Ticket *ticket, int countTk, Trip *CreateNT, int countTrip) {
 	int i , j;
     if (countTk == 0) {
@@ -531,7 +532,7 @@ void CheckTicketStatus(Ticket *ticket, int countTk, Trip *CreateNT, int countTri
         printf("Khong tim thay ve co so %d.\n", searchTk);
     }
 }
-
+// hien thi xe theo phân trang
 void listTrips ( Trip *CreateNT , int size ) {
 	int pageNumber = 1 ;
 	int pageSize ;
@@ -598,7 +599,7 @@ void listTrips ( Trip *CreateNT , int size ) {
 		} while (1);
 	} while ( choice == 1 || choice == 2 ) ;
 }
-
+// cap nhat trang thai thanh toan
 void updateTicket ( Ticket *ticket , int size ) {
 	int i ;
 	int flag = 0 ;
@@ -653,7 +654,7 @@ void updateTicket ( Ticket *ticket , int size ) {
 	}
 	if ( flag == 0 ) printf ("khong tim thay ve !!!!!\n") ;
 }
-
+// khoa ve hoac huy ve
 void lockTk(Ticket *ticket, int ticketCount, Trip *CreateNT, int tripCount , int *count ) {
     int search, choice;
     char str[20];
@@ -729,17 +730,20 @@ void lockTk(Ticket *ticket, int ticketCount, Trip *CreateNT, int tripCount , int
         printf("Khong tim thay ve!\n");
     }
 }
-
+// tong thu nhap 
 int sumPaymen ( Ticket *ticket , int size ) {
-	int i , sum = 0 ;
+	int i , sum = 0  , cnt = 0;
 	for ( i=0 ; i<size ; i++ ) {
 		if ( ticket[i].paymentStatus == 1 ) {
 			sum = sum + ticket[i].price ;
+			cnt++ ;
 		}
 	}
-	return sum;
+	printf ("tong so ve da thanh toan la : %d \n" , cnt ) ;
+	printf ("tong doanh thu la : %d \n" , sum ) ;
+	return 0;
 }
-
+// chuc nang 2 cau tab8
 void functionOut2 ( Ticket *ticket , int countTk , int totalCancel ){
 	printf ("	______________________________________________\n") ;
 	printf ("	| So ve da dat la : %-25d|\n" , countTk ) ;
@@ -747,7 +751,7 @@ void functionOut2 ( Ticket *ticket , int countTk , int totalCancel ){
 	printf ("	| So ve hop le la : %-25d|\n" , countTk - totalCancel ) ;
 	printf ("	|____________________________________________|\n") ;
 }
-
+// dem ve trong khoang thoi gian
 void functionTime(Ticket *ticket, int countTk) {
 	char str[50] ;
     int dayStart, dayEnd;
@@ -811,14 +815,14 @@ void functionTime(Ticket *ticket, int countTk) {
 
     printf("\nSo ve da dat trong khoang thoi gian %d/%d den %d/%d la: %d\n", dayStart, monthStart, dayEnd, monthEnd, count);
 }
-
+// tab 8
 void reportRevenue(Ticket *ticket, int countTk, int totalCancel) {
     int choice;
     char str[50];
 
-    printf ("________________________________\n");
+    printf ("_________________________________\n");
     printf ("| 1: doanh thu                  |\n");
-    printf ("| 2: thong ke theo chuyen xe    |\n");
+    printf ("| 2: thong ke ve                |\n");
     printf ("| 3: thong ke theo thoi gian    |\n");
     printf ("|________hay lua chon___________|\n");
 
@@ -830,7 +834,7 @@ void reportRevenue(Ticket *ticket, int countTk, int totalCancel) {
 
         switch (choice) {
             case 1:
-                printf("Tong doanh thu la: %d VND\n", sumPaymen(ticket, countTk));
+                sumPaymen(ticket, countTk) ;
                 break;
 
             case 2:
@@ -849,3 +853,4 @@ void reportRevenue(Ticket *ticket, int countTk, int totalCancel) {
         break;
     }
 }
+
