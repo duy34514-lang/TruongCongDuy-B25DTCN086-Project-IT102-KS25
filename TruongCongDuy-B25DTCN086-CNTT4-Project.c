@@ -233,6 +233,10 @@ void createNewTrip(Trip *CreateNT, int *count) {
     int size ;
     char str[10] ; 
     
+    if ( *count > 100 ) {
+    	printf ("ban da den gio han nhap chuyen xe ") ;
+    	return ;
+	}
     do {
         printf("Ban muon them bao nhieu tuyen: ");
         if (check( str , &size ) == 0) {
@@ -739,8 +743,8 @@ int sumPaymen ( Ticket *ticket , int size ) {
 			cnt++ ;
 		}
 	}
-	printf ("tong so ve da thanh toan la : %d \n" , cnt ) ;
-	printf ("tong doanh thu la : %d \n" , sum ) ;
+	printf ("tong so ve da thanh toan la : %d " , cnt ) ;
+	printf ("tong doanh thu la : %d " , sum ) ;
 	return 0;
 }
 // chuc nang 2 cau tab8
@@ -820,9 +824,9 @@ void reportRevenue(Ticket *ticket, int countTk, int totalCancel) {
     int choice;
     char str[50];
 
-    printf ("_________________________________\n");
+    printf ("________________________________\n");
     printf ("| 1: doanh thu                  |\n");
-    printf ("| 2: thong ke ve                |\n");
+    printf ("| 2: thong ke theo chuyen xe    |\n");
     printf ("| 3: thong ke theo thoi gian    |\n");
     printf ("|________hay lua chon___________|\n");
 
@@ -853,4 +857,3 @@ void reportRevenue(Ticket *ticket, int countTk, int totalCancel) {
         break;
     }
 }
-
